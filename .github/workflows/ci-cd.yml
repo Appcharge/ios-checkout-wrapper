@@ -96,7 +96,7 @@ jobs:
   
             - name: Deploy & Invalidate
               run: |
-                aws s3 cp ./dist/core.min.js s3://${{ vars.S3_BUCKET_PROD }}/core.min.js --cache-control 'public, max-age=0'
+                aws s3 sync ./build s3://${{ vars.S3_BUCKET_PROD }} --cache-control 'public, max-age=0'
                 aws cloudfront create-invalidation --distribution-id ${{ vars.CDN_DISTRIBUTION_ID_PROD }} --paths "/*"
 
 
@@ -124,7 +124,7 @@ jobs:
   
             - name: Deploy & Invalidate
               run: |
-                aws s3 cp ./dist/core.min.js s3://${{ vars.S3_BUCKET_SANDBOX }}/core.min.js --cache-control 'public, max-age=0'
+                aws s3 sync ./build s3://${{ vars.S3_BUCKET_SANDBOX }} --cache-control 'public, max-age=0'
                 aws cloudfront create-invalidation --distribution-id ${{ vars.CDN_DISTRIBUTION_ID_SANDBOX }} --paths "/*"
 
 
