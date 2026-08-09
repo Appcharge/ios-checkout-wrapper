@@ -2,15 +2,25 @@ import { AppchargeCheckout } from "appcharge-checkout-reactjs-sdk";
 import { useEffect, useState } from "react";
 
 interface Session {
-  url: string;
   sessionToken: string;
-  cot: string;
+  url: string;
   sdkV: string;
+  checkoutToken: string;
   identifier: string;
+  playerId: string;
+  severity: string;
+  logEndpoint: string;
+  ppt: string;
+  comType: string;
+  redirect: string;
 }
 
 interface Params {
   [key: string]: any;
+}
+
+declare global {
+  interface Window { unityVersion: any; }
 }
 
 export default function CheckoutComponent() {
@@ -19,12 +29,30 @@ export default function CheckoutComponent() {
   const session: Session = {
     sessionToken: searchParams.get("sessionToken") || "",
     url: searchParams.get("url") || '',
-    cot: searchParams.get("cot") || '',
+    checkoutToken: searchParams.get("checkoutToken") || '',
+    ppt: searchParams.get("ppt") || '',
     identifier: searchParams.get("identifier") || '',
+    playerId: searchParams.get("playerId") || '',
+    severity: searchParams.get("severity") || '',
     sdkV: searchParams.get("sdkV") || '',
+    logEndpoint: searchParams.get("logEndpoint") || '',
+    comType: searchParams.get("comType") || '',
+    redirect: searchParams.get("redirect") || ''
   }
 
-  const sourceVersion = `native-ios-${session.sdkV || ''}`;
+  if (session.redirect == "false") {
+    session.checkoutToken += '&redirect=false'
+  }
+
+  const body = document.querySelector('body')
+  if (body) {
+    if (session.comType != 'webgl') {
+      body.classList.add('black')
+    }
+  }
+
+  const sourceVersion = `native-${session.sdkV || ''}`;
+  window.unityVersion = sourceVersion;
 
   const [focusResponse, setFocusResponse] = useState<{ params: Params, event: string } | null>(null);
 
@@ -69,8 +97,12 @@ export default function CheckoutComponent() {
       data: params
     }
 
-    const uri = `acnative-${session.identifier}://action?data=${btoa(JSON.stringify(data))}`;
-    window.location.href = uri;
+    if (session.comType === "webgl") {
+      window.parent?.postMessage(JSON.stringify(data), "*");
+    } else {
+      const uri = `acnative-${session.identifier}://action?data=${btoa(JSON.stringify(data))}`;
+      window.location.href = uri;
+    }
   }
 
   return (
@@ -85,10 +117,10 @@ export default function CheckoutComponent() {
         onPaymentIntentSuccess={intentSuccess}
         onPaymentIntentFailed={intentFail}
         sourceVersion={sourceVersion}
-        checkoutToken={session.cot}
         checkoutStyle={{
-          overlayBackgroundColor: "black"
+          overlayBackgroundColor: session.comType === "webgl" ? "rgba(0,0,0,0.8)" : "black"
         }}
+        checkoutToken={session.checkoutToken === '' ? session.ppt : session.checkoutToken}
       />
     </div>
   );
